@@ -1,18 +1,25 @@
 using UnityEngine;
 using DG.Tweening;
-
+using UnityEngine.UI;
+using System.Collections; // ← обязательно!
 
 public class Doom : MonoBehaviour
 {
-    void Start()
+    public Button button;
+
+    public void OnButtonClick()
     {
+        // Запускаем корутину для последовательной анимации
+        StartCoroutine(ScaleButtonSequence());
+    }
 
-        transform.DOMove(new Vector3(5, 0, 0), 2f);
-    
+    IEnumerator ScaleButtonSequence()
+    {
+        // Увеличиваем масштаб до 2 за 1 секунду
+        button.transform.DOScale(2f, 1f).SetEase(Ease.OutQuad); // опционально: плавность
+        yield return new WaitForSeconds(1f);
 
-        transform.DOScale(2f, 1f);
-    
-
-        transform.DORotate(new Vector3(0, 90, 0), 1.5f);
+        // Уменьшаем масштаб обратно до 1 за 2 секунды
+        button.transform.DOScale(1f, 2f).SetEase(Ease.OutQuad);
     }
 }
