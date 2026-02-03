@@ -474,7 +474,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1404176731}
-  - component: {fileID: 1404176730}
   m_Layer: 0
   m_Name: OreVein
   m_TagString: Untagged
@@ -482,25 +481,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &1404176730
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1404176729}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f3cc2083216635c44999bf298aede3cd, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::OreVein
-  maxHealth: 100
-  stage1_Full: {fileID: 0}
-  stage2_Medium: {fileID: 0}
-  stage3_Small: {fileID: 0}
-  hitParticles: {fileID: 0}
-  hitSound: {fileID: 0}
-  breakSound: {fileID: 0}
 --- !u!4 &1404176731
 Transform:
   m_ObjectHideFlags: 0
@@ -510,10 +490,11 @@ Transform:
   m_GameObject: {fileID: 1404176729}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 7.20871, y: 0.68135, z: 3.0896}
+  m_LocalPosition: {x: 1.63, y: 1.25, z: 3.0896}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children: []
+  m_Children:
+  - {fileID: 2020267012584692605}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1917147988
@@ -872,16 +853,13 @@ MonoBehaviour:
   m_GameObject: {fileID: 2000971778}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e65b41b49b1d3e241935e78adc28e669, type: 3}
+  m_Script: {fileID: 11500000, guid: 2e83ad6db2838c04c9df333bbba62c6f, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::PlayerMining
-  pickaxeDamage: 20
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerMiner
+  playerCamera: {fileID: 330585545}
+  animator: {fileID: 3469287838469558392}
   miningRange: 5
-  oreLayer:
-    serializedVersion: 2
-    m_Bits: 0
-  pickaxeAnimator: {fileID: 0}
-  maxAngle: 30
+  damagePerHit: 10
 --- !u!1 &137303653091347542
 GameObject:
   m_ObjectHideFlags: 0
@@ -1256,7 +1234,6 @@ GameObject:
   - component: {fileID: 3469287838469558390}
   - component: {fileID: 1711813854677132476}
   - component: {fileID: 3469287838469558392}
-  - component: {fileID: 3469287838469558393}
   m_Layer: 0
   m_Name: Pickaxe
   m_TagString: Untagged
@@ -1282,7 +1259,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &1328023389750596645
 Transform:
   m_ObjectHideFlags: 0
@@ -1329,6 +1306,7 @@ GameObject:
   - component: {fileID: 3145401164305257688}
   - component: {fileID: 883342111054962706}
   - component: {fileID: 3145401164305257689}
+  - component: {fileID: 3145401164305257690}
   m_Layer: 7
   m_Name: "\u041A\u0430\u043C\u0435\u043D\u043D\u0430\u044F \u043A\u0443\u0447\u0430 "
   m_TagString: Untagged
@@ -1488,12 +1466,12 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1226519205742906891}
   serializedVersion: 2
-  m_LocalRotation: {x: -0.7071068, y: 0, z: -0, w: 0.7071067}
-  m_LocalPosition: {x: 4.53, y: 0.57, z: 2.87}
-  m_LocalScale: {x: 150.03456, y: 150.03456, z: 150.03456}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: -0.000066649656, y: 0.008398066, z: 0.00006665204}
+  m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 0}
+  m_Father: {fileID: 5060837551998151626}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!4 &2020267012584692605
 Transform:
@@ -1503,12 +1481,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1676111504777970119}
   serializedVersion: 2
-  m_LocalRotation: {x: -0.7071068, y: 0, z: -0, w: 0.7071067}
-  m_LocalPosition: {x: 4.593829, y: 0.5248985, z: 5.6754456}
-  m_LocalScale: {x: 150.03456, y: 150.03456, z: 150.03456}
+  m_LocalRotation: {x: -0.7071068, y: -0, z: -0, w: 0.7071067}
+  m_LocalPosition: {x: 2.963829, y: -0.725, z: 1.877}
+  m_LocalScale: {x: 150.03456, y: 150.03455, z: 150.03455}
   m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
+  m_Children:
+  - {fileID: 5060837551998151626}
+  m_Father: {fileID: 1404176731}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!4 &2165188811058043908
 Transform:
@@ -1602,6 +1581,19 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 0.015843527, y: 0.012447161, z: 0.008814786}
   m_Center: {x: 0.00012158975, y: -0.0004868106, z: 0.002054839}
+--- !u!114 &3145401164305257690
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1676111504777970119}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bbcf6db400f090546acb46308553f8cb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::StonePile
+  maxHealth: 100
 --- !u!33 &3306050603586640660
 MeshFilter:
   m_ObjectHideFlags: 0
@@ -1655,38 +1647,6 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
---- !u!114 &3469287838469558393
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 919132148268582249}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 345ef857f3033f24d9943f67902175fd, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Pickaxe
-  damagePerHit: 25
-  attackRange: 3
-  oreLayer:
-    serializedVersion: 2
-    m_Bits: 128
-  swingCooldown: 0.6
-  pickaxeTransform: {fileID: 0}
-  useCoroutineAnimation: 0
-  swingDuration: 0.3
-  pickaxeAnimator: {fileID: 3469287838469558392}
-  swingTriggerName: Swing
-  hitParticles: {fileID: 0}
-  breakParticles: {fileID: 0}
-  swingSound: {fileID: 0}
-  hitStoneSound: {fileID: 0}
-  hitMetalSound: {fileID: 0}
-  breakSound: {fileID: 0}
-  enableScreenShake: 1
-  shakeIntensity: 0.2
-  shakeDuration: 0.15
 --- !u!4 &3614250526024806396
 Transform:
   m_ObjectHideFlags: 0
@@ -1796,12 +1756,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 5580070285458993520}
   serializedVersion: 2
-  m_LocalRotation: {x: -0.7071068, y: 0, z: -0, w: 0.7071067}
-  m_LocalPosition: {x: 4.54, y: 0.56, z: 4.13}
-  m_LocalScale: {x: 150.03456, y: 150.03456, z: 150.03456}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: -0.00035877863, y: 0.010300595, z: 0.00023395711}
+  m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
+  m_Children:
+  - {fileID: 1895637300146099377}
+  m_Father: {fileID: 2020267012584692605}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!4 &5132241355973690036
 Transform:
@@ -1858,7 +1819,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &5694300977656517451
 Transform:
   m_ObjectHideFlags: 0
@@ -2239,7 +2200,4 @@ SceneRoots:
   - {fileID: 832575519}
   - {fileID: 8896753327947991086}
   - {fileID: 2000971783}
-  - {fileID: 2020267012584692605}
-  - {fileID: 5060837551998151626}
-  - {fileID: 1895637300146099377}
   - {fileID: 1404176731}
