@@ -7,33 +7,39 @@ public class PlayerMiner : MonoBehaviour
     [SerializeField] private Animator animator;
     [SerializeField] private float miningRange = 5f;
     [SerializeField] private int damagePerHit = 10;
-
-    private const string ANIM_ATTACK = "Mine";
+    [SerializeField] private float hitCooldown = 0.8f; // ⬅️ Кулдаун между ударами
     
-    // Флаг блокировки повторного нажатия
+    private const string ANIM_ATTACK = "Mine";
     private bool isMining = false;
 
     void Update()
     {
-        // Проверяем нажатие и доступность действия
         if (Input.GetMouseButtonDown(0) && !isMining)
         {
-            isMining = true;
-
-            // Запуск анимации (срабатывает сразу)
-            animator.SetTrigger(ANIM_ATTACK);
-
-            // Запуск корутины с задержкой удара (1.5 сек)
-            StartCoroutine(MineWithDelay());
+            StartCoroutine(MineSequence());
         }
     }
 
-    private IEnumerator MineWithDelay()
+    private IEnumerator MineSequence()
     {
-        // Ждем 1.5 секунды (время анимации)
-        yield return new WaitForSeconds(1.5f);
+        isMining = true;
+        
+        // Запуск анимации
+        animator.SetTrigger(ANIM_ATTACK);
 
-        // Нанесение урона ПОСЛЕ задержки
+        // ⬅️ Момент нанесения урона (подгоните под вашу анимацию)
+        yield return new WaitForSeconds(0.2f);
+        
+        ApplyDamage();
+
+        // ⬅️ Ждём кулдаун перед следующим ударом
+        yield return new WaitForSeconds(hitCooldown);
+        
+        isMining = false;
+    }
+
+    private void ApplyDamage()
+    {
         Ray ray = playerCamera.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0f));
         
         if (Physics.Raycast(ray, out RaycastHit hit, miningRange))
@@ -43,8 +49,5 @@ public class PlayerMiner : MonoBehaviour
                 stonePile.TakeDamage(damagePerHit);
             }
         }
-
-        // Разблокировка возможности майнить снова
-        isMining = false;
     }
 }
