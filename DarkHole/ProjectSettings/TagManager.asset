@@ -5,16 +5,17 @@ TagManager:
   serializedVersion: 3
   tags:
   - Teleport
+  - Block
   layers:
   - Default
   - TransparentFX
   - Ignore Raycast
-  - 
+  - Player
   - Water
   - UI
   - PlayersTool
   - Ore
-  - 
+  - Block
   - 
   - 
   - 

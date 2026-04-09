@@ -1,0 +1,76 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1001 &2730520237449395791
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 4375151372860122181, guid: 78350a8d9e065b641b8c70f16fa58880, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 15.581768
+      objectReference: {fileID: 0}
+    - target: {fileID: 4375151372860122181, guid: 78350a8d9e065b641b8c70f16fa58880, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 4.104808
+      objectReference: {fileID: 0}
+    - target: {fileID: 4375151372860122181, guid: 78350a8d9e065b641b8c70f16fa58880, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: -6.0092063
+      objectReference: {fileID: 0}
+    - target: {fileID: 4375151372860122181, guid: 78350a8d9e065b641b8c70f16fa58880, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4375151372860122181, guid: 78350a8d9e065b641b8c70f16fa58880, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4375151372860122181, guid: 78350a8d9e065b641b8c70f16fa58880, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4375151372860122181, guid: 78350a8d9e065b641b8c70f16fa58880, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4925347977130688552, guid: 78350a8d9e065b641b8c70f16fa58880, type: 3}
+      propertyPath: m_Name
+      value: Main Variant
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 4925347977130688552, guid: 78350a8d9e065b641b8c70f16fa58880, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 5501467305337284043}
+  m_SourcePrefab: {fileID: 100100000, guid: 78350a8d9e065b641b8c70f16fa58880, type: 3}
+--- !u!1 &7043234353148591719 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 4925347977130688552, guid: 78350a8d9e065b641b8c70f16fa58880, type: 3}
+  m_PrefabInstance: {fileID: 2730520237449395791}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &5501467305337284043
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7043234353148591719}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dde31f5b57aab094ebf4774a782bc66e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MineableBlock
+  baseHp: 100
+  hardness: 50
+  visualStates:
+  - {fileID: 4925347977130688552, guid: 78350a8d9e065b641b8c70f16fa58880, type: 3}
+  - {fileID: 4523119285250570876, guid: 0731c17b76335534ab5b78942b87e05e, type: 3}
+  - {fileID: 7532652779674320327, guid: 0fa639dd62c847c4085e84a2f2134985, type: 3}
+  oreDrops: []
+  dropDirection: {x: 1, y: 0, z: 0}
+  dropForce: 5
