@@ -41,6 +41,11 @@ public class PlayerInventory : MonoBehaviour
 
         // 🔹 Вывод в консоль (как ты просил)
         Debug.Log($"📦 {oreName}: {_oreCounts[oreName]} шт.");
+
+        if (OreUIManager.Instance != null)
+        {
+            OreUIManager.Instance.UpdateOreUI(oreName, _oreCounts[oreName]);
+        }
         
         // 🔹 Можно добавить звук подбора:
         // AudioSource.PlayClipAtPoint(pickupSound, transform.position, 0.7f);
@@ -62,4 +67,5 @@ public class PlayerInventory : MonoBehaviour
         }
         Debug.Log("🎒 =================");
     }
+    
 }
