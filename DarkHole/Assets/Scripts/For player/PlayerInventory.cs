@@ -67,5 +67,69 @@ public class PlayerInventory : MonoBehaviour
         }
         Debug.Log("🎒 =================");
     }
+    // Добавь этот метод в PlayerInventory.cs:
+
+// 🔹 Удалить руду из инвентаря (для плавильни)
+public void RemoveOre(string oreName, int amount)
+{
+    if (_oreCounts.ContainsKey(oreName))
+    {
+        _oreCounts[oreName] -= amount;
+        
+        if (_oreCounts[oreName] <= 0)
+        {
+            _oreCounts.Remove(oreName);
+        }
+        
+        Debug.Log($"📤 Удалено: {oreName} x{amount}");
+        
+        // 🔹 Уведомляем UI
+        if (OreUIManager.Instance != null)
+        {
+            OreUIManager.Instance.UpdateOreUI(oreName, GetOreCount(oreName));
+        }
+    }
+}
+// 🔹 Добавить деталь (для крафта на наковальне)
+public void AddPart(string partName, int amount = 1)
+{
+    if (_oreCounts.ContainsKey(partName))
+    {
+        _oreCounts[partName] += amount;
+    }
+    else
+    {
+        _oreCounts[partName] = amount;
+    }
+    Debug.Log($"🔧 Деталь добавлена: {partName} x{amount}");
+    OreUIManager.Instance?.UpdateAllUI();
+}
+
+// 🔹 Добавить готовый предмет (оружие/инструмент)
+public void AddItem(string itemName, int amount = 1)
+{
+    if (_oreCounts.ContainsKey(itemName))
+    {
+        _oreCounts[itemName] += amount;
+    }
+    else
+    {
+        _oreCounts[itemName] = amount;
+    }
+    Debug.Log($"⚔️ Предмет создан: {itemName} x{amount}");
+    OreUIManager.Instance?.UpdateAllUI();
+}
+
+// 🔹 Удалить деталь (для крафта)
+public void RemovePart(string partName, int amount)
+{
+    if (_oreCounts.ContainsKey(partName))
+    {
+        _oreCounts[partName] -= amount;
+        if (_oreCounts[partName] <= 0)
+            _oreCounts.Remove(partName);
+        Debug.Log($"🔧 Деталь использована: {partName} x{amount}");
+    }
+}
     
 }

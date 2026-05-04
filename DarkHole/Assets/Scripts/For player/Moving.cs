@@ -32,16 +32,22 @@ public class Moving : MonoBehaviour
     private void Start()
     {
         currentSpeed = walkSpeed;
-        Cursor.lockState = CursorLockMode.Locked;
-        Cursor.visible = false;
+
+        // 🔹 Инициализация курсора через CursorManager (не напрямую!)
+        if (CursorManager.Instance == null)
+        {
+            // Если менеджера нет — создаём базовое поведение
+            Cursor.lockState = CursorLockMode.Locked;
+            Cursor.visible = false;
+        }
 
         // Настройка источника шагов
         if (!footstepAudio) footstepAudio = GetComponent<AudioSource>();
         footstepAudio.playOnAwake = false;
         footstepAudio.loop = true;
-        footstepAudio.spatialBlend = 1f; // 3D звук
+        footstepAudio.spatialBlend = 1f;
 
-        // Настройка источника для одноразовых звуков (прыжок, приземление и т.д.)
+        // Настройка источника для одноразовых звуков
         if (!sfxAudio)
         {
             sfxAudio = gameObject.AddComponent<AudioSource>();
@@ -58,7 +64,6 @@ public class Moving : MonoBehaviour
         bool isSprinting = val.Get<float>() > 0.5f;
         currentSpeed = isSprinting ? sprintSpeed : walkSpeed;
 
-        // Обновляем питч шагов при переключении режима
         if (footstepAudio.isPlaying)
             footstepAudio.pitch = Mathf.Clamp(currentSpeed / walkSpeed, 0.85f, 1.2f);
     }
@@ -71,10 +76,18 @@ public class Moving : MonoBehaviour
 
     private void Update()
     {
+        // 🔹 Если открыт любой UI — отключаем управление персонажем
+        if (CursorManager.IsAnyUiOpen)
+        {
+            // Сбрасываем ввод, чтобы персонаж не двигался "сам по себе"
+            _move = Vector2.zero;
+            return;
+        }
+
         // 1. Проверка земли
         if (_characterController.isGrounded && _velocity.y < 0)
         {
-            _velocity.y = 0f; // Если персонаж "дёргается" на ровной поверхности, замени на -2f
+            _velocity.y = 0f;
         }
 
         // 2. Прыжок
@@ -107,7 +120,7 @@ public class Moving : MonoBehaviour
         }
         else if (!isMoving && footstepAudio.isPlaying)
         {
-            footstepAudio.Stop(); // Мгновенная остановка при отпускании клавиши
+            footstepAudio.Stop();
         }
     }
 
@@ -115,7 +128,6 @@ public class Moving : MonoBehaviour
     {
         if (jumpStrainClip && sfxAudio)
         {
-            // Лёгкий рандом питча, чтобы звук не звучал монотонно
             sfxAudio.pitch = Random.Range(0.9f, 1.1f);
             sfxAudio.PlayOneShot(jumpStrainClip, jumpVolume);
         }
