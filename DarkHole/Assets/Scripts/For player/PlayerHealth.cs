@@ -1,6 +1,5 @@
 using UnityEngine;
-using TMPro; // Если используешь TextMeshPro
-// using UnityEngine.UI; // Если используешь обычный Text (раскомментируй при необходимости)
+using TMPro;
 
 public class PlayerHealth : MonoBehaviour
 {
@@ -12,7 +11,7 @@ public class PlayerHealth : MonoBehaviour
     [SerializeField] private int armor = 0;
 
     [Header("📊 UI")]
-    [SerializeField] private TextMeshProUGUI healthText; // Перетащи сюда текст здоровья
+    [SerializeField] private TextMeshProUGUI healthText;
 
     public static PlayerHealth Instance { get; private set; }
 
@@ -35,10 +34,8 @@ public class PlayerHealth : MonoBehaviour
         Debug.Log($"👤 Игрок создан. Здоровье: {currentHealth}/{maxHealth}");
     }
 
-    // 🔹 Получение урона
     public void TakeDamage(int amount)
     {
-        // Броня уменьшает урон (50% от значения брони)
         int damageReduction = armor / 2;
         int finalDamage = Mathf.Max(1, amount - damageReduction);
 
@@ -53,7 +50,6 @@ public class PlayerHealth : MonoBehaviour
         }
     }
 
-    // 🔹 Лечение
     public void Heal(int amount)
     {
         currentHealth = Mathf.Min(maxHealth, currentHealth + amount);
@@ -61,17 +57,13 @@ public class PlayerHealth : MonoBehaviour
         UpdateUI();
     }
 
-    // 🔹 Смерть
     private void Die()
     {
         currentHealth = 0;
         Debug.Log("💀 ИГРОК УМЕР! Перезапуск сцены...");
         UpdateUI();
 
-        // Перезапуск сцены через 2 секунды
         Invoke("RestartScene", 2f);
-        
-        // Останавливаем игру
         Time.timeScale = 0f;
     }
 
@@ -81,12 +73,10 @@ public class PlayerHealth : MonoBehaviour
         UnityEngine.SceneManagement.SceneManager.LoadScene(0);
     }
 
-    // 🔹 Публичные методы
     public int GetCurrentHealth() => currentHealth;
     public int GetMaxHealth() => maxHealth;
     public bool IsAlive() => currentHealth > 0;
 
-    // 🔹 Обновление UI
     private void UpdateUI()
     {
         if (healthText != null)

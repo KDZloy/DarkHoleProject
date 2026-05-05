@@ -1,5 +1,5 @@
 using UnityEngine;
-using UnityEngine.AI; // Требуется пакет AI Navigation
+using UnityEngine.AI;
 
 public class ZombieAI : MonoBehaviour
 {
@@ -7,13 +7,18 @@ public class ZombieAI : MonoBehaviour
     [SerializeField] private Transform player;
     [SerializeField] private float detectionRange = 15f;
     [SerializeField] private float attackRange = 2f;
+    [SerializeField] private float despawnTime = 10f; // Время до ухода зомби
+
+    [Header("🏃 Скорость")]
+    [SerializeField] private float walkSpeed = 2f;    // Шаг (когда нет игрока)
+    [SerializeField] private float runSpeed = 6f;     // Бег (когда видит игрока)
 
     [Header("⚔️ Бой")]
-    [SerializeField] private int damage = 15; // Урон зомби (15 HP)
+    [SerializeField] private int damage = 15;
     [SerializeField] private float attackCooldown = 1.5f;
     [SerializeField] private LayerMask playerLayer;
 
-    [Header("❤️ Здоровье зомби")]
+    [Header("❤️ Здоровье")]
     [SerializeField] private int maxHealth = 100;
     private int currentHealth;
 
@@ -21,59 +26,110 @@ public class ZombieAI : MonoBehaviour
     [SerializeField] private NavMeshAgent agent;
     [SerializeField] private Animator animator;
 
+    [Header("🎬 Анимации")]
+    [SerializeField] private string attackAnimTrigger = "Attack";
+    [SerializeField] private string deathAnimBool = "IsDead";
+    [SerializeField] private string speedAnimFloat = "Speed";
+
     private float lastAttackTime = 0f;
     private bool isDead = false;
+    private bool isAttacking = false;
+    private float lastSeenPlayerTime = 0f;
+    private bool playerInRange = false;
 
     private void Start()
     {
         currentHealth = maxHealth;
 
-        if (agent == null)
-            agent = GetComponent<NavMeshAgent>();
+        if (agent == null) agent = GetComponent<NavMeshAgent>();
+        if (animator == null) animator = GetComponent<Animator>();
+
+        // 🔹 Отключаем Root Motion для NavMeshAgent
+        if (animator != null)
+            animator.applyRootMotion = false;
 
         GameObject playerObj = GameObject.FindGameObjectWithTag("Player");
         if (playerObj != null)
             player = playerObj.transform;
+
+        if (animator != null)
+            animator.SetBool(deathAnimBool, false);
     }
 
     private void Update()
     {
-        if (isDead || player == null || agent == null) return;
-        if (!PlayerHealth.Instance.IsAlive()) return; // Если игрок умер, зомби замирает
+        if (isDead) return;
 
-        float distanceToPlayer = Vector3.Distance(transform.position, player.position);
-
-        if (distanceToPlayer <= detectionRange)
+        // 🔹 Проверка: жив ли игрок и существует ли
+        if (PlayerHealth.Instance == null || !PlayerHealth.Instance.IsAlive())
         {
-            agent.SetDestination(player.position);
+            player = null;
+        }
+        else if (player == null)
+        {
+            player = GameObject.FindGameObjectWithTag("Player")?.transform;
+        }
 
-            if (distanceToPlayer <= attackRange)
+        // 🔹 Логика поведения
+        if (player != null)
+        {
+            float distanceToPlayer = Vector3.Distance(transform.position, player.position);
+
+            if (distanceToPlayer <= detectionRange)
             {
-                agent.isStopped = true;
-                TryAttack();
+                // 🔹 ИГРОК УВИДЕН — БЕЖИМ!
+                playerInRange = true;
+                lastSeenPlayerTime = Time.time;
+                agent.speed = runSpeed;
+                agent.SetDestination(player.position);
+
+                if (animator != null)
+                    animator.SetFloat(speedAnimFloat, agent.velocity.magnitude);
+
+                // Атака если близко
+                if (distanceToPlayer <= attackRange)
+                {
+                    agent.isStopped = true;
+                    if (!isAttacking) TryAttack();
+                }
+                else
+                {
+                    agent.isStopped = false;
+                    isAttacking = false;
+                }
+
+                // Поворот к игроку
+                if (distanceToPlayer > attackRange && agent.velocity.magnitude > 0.1f)
+                {
+                    Vector3 direction = agent.velocity.normalized;
+                    Quaternion lookRotation = Quaternion.LookRotation(new Vector3(direction.x, 0, direction.z));
+                    transform.rotation = Quaternion.Slerp(transform.rotation, lookRotation, 10f * Time.deltaTime);
+                }
             }
             else
             {
-                agent.isStopped = false;
+                // 🔹 ИГРОК ДАЛЕКО — ИДЁМ ШАГОМ
+                playerInRange = false;
+                agent.speed = walkSpeed;
+                agent.isStopped = true;
+
+                if (animator != null)
+                    animator.SetFloat(speedAnimFloat, 0f);
             }
 
-            // Поворот к игроку
-            if (distanceToPlayer > attackRange && agent.velocity.magnitude > 0.1f)
+            // 🔹 Проверка: если игрока нет рядом больше N секунд — зомби уходит
+            if (Time.time - lastSeenPlayerTime > despawnTime)
             {
-                Vector3 direction = agent.velocity.normalized;
-                Quaternion lookRotation = Quaternion.LookRotation(new Vector3(direction.x, 0, direction.z));
-                transform.rotation = Quaternion.Slerp(transform.rotation, lookRotation, 10f * Time.deltaTime);
+                DespawnZombie();
             }
         }
         else
         {
-            agent.isStopped = true;
-        }
-
-        // Анимация
-        if (animator != null)
-        {
-            animator.SetFloat("Speed", agent.velocity.magnitude);
+            // 🔹 ИГРОКА НЕТ В СЦЕНЕ — зомби уходит
+            if (Time.time - lastSeenPlayerTime > despawnTime)
+            {
+                DespawnZombie();
+            }
         }
     }
 
@@ -88,48 +144,63 @@ public class ZombieAI : MonoBehaviour
 
     private void Attack()
     {
-        if (animator != null)
-            animator.SetTrigger("Attack");
+        isAttacking = true;
+        if (animator != null) animator.SetTrigger(attackAnimTrigger);
+        Invoke(nameof(DealDamage), 0.3f);
+        Invoke(nameof(ResetAttack), attackCooldown);
+    }
 
+    private void DealDamage()
+    {
         Collider[] hitColliders = Physics.OverlapSphere(transform.position, attackRange, playerLayer);
         foreach (var hit in hitColliders)
         {
             if (hit.CompareTag("Player"))
             {
                 PlayerHealth playerHealth = hit.GetComponent<PlayerHealth>();
-                if (playerHealth != null)
-                {
-                    playerHealth.TakeDamage(damage);
-                }
+                if (playerHealth != null) playerHealth.TakeDamage(damage);
                 break;
             }
         }
     }
 
-    // 🔹 Метод для получения урона (если игрок сможет атаковать)
+    private void ResetAttack() { isAttacking = false; }
+
     public void TakeDamage(int amount)
     {
         if (isDead) return;
-
         currentHealth -= amount;
         Debug.Log($"🧟 Зомби получил {amount} урона. Здоровье: {currentHealth}/{maxHealth}");
-
-        if (currentHealth <= 0)
-        {
-            Die();
-        }
+        
+        if (animator != null && currentHealth > 0) 
+            animator.SetTrigger("Hit");
+        
+        if (currentHealth <= 0) Die();
     }
 
     private void Die()
     {
         isDead = true;
         if (agent != null) agent.isStopped = true;
-        Debug.Log("🧟 Зомби умер!");
-
+        
+        // 🔹 Анимация смерти
         if (animator != null)
-            animator.SetBool("IsDead", true);
-
+        {
+            animator.SetBool(deathAnimBool, true);
+            animator.SetFloat(speedAnimFloat, 0f);
+        }
+        
+        Debug.Log("🧟 Зомби умер!");
         Destroy(gameObject, 3f);
+    }
+
+    // 🔹 Зомби уходит (игрок исчез)
+    private void DespawnZombie()
+    {
+        Debug.Log("🧟 Зомби ушёл (игрок не найден)");
+        
+        // Можно добавить анимацию ухода или просто удалить
+        Destroy(gameObject);
     }
 
     private void OnDrawGizmosSelected()
