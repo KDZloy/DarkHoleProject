@@ -6468,7 +6468,7 @@ MonoBehaviour:
   walkSpeed: 1
   runSpeed: 6
   damage: 15
-  attackCooldown: 1.5
+  attackCooldown: 0.8
   playerLayer:
     serializedVersion: 2
     m_Bits: 8
