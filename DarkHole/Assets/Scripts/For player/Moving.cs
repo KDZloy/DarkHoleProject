@@ -76,6 +76,14 @@ public class Moving : MonoBehaviour
 
     private void Update()
     {
+        // 🔹 Если управление заблокировано — не обрабатываем ввод
+        if (PlayerInputLock.Instance != null && PlayerInputLock.Instance.IsInputLocked())
+        {
+            _move = Vector2.zero;
+            return;
+        }
+
+    // ... остальной код ...
         // 🔹 Если открыт любой UI — отключаем управление персонажем
         if (CursorManager.IsAnyUiOpen)
         {

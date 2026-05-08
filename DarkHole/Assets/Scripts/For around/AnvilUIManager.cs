@@ -1,15 +1,27 @@
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
+using System;
 
 public class AnvilUIManager : MonoBehaviour
 {
+    // 🔹 Тип материала
+    public enum MaterialType
+    {
+        Iron,
+        Copper,
+        Gold,
+        Diamond,
+        Cobalt
+    }
+
     // 🔹 Рецепт: Слиток → Деталь
     [System.Serializable]
     public class PartRecipe
     {
         public string partName;          // Название детали (Blade, Handle, PickaxeHead)
-        public string requiredIngot;     // Какой слиток нужен (IronIngot, GoldIngot...)
+        public MaterialType material;    // Материал детали (Iron, Copper...)
+        public string requiredIngot;     // Какой слиток нужен (IronIngot, CopperIngot...)
         public int ingotsNeeded;         // Сколько слитков нужно
         public Image partIcon;           // Иконка детали
         public TextMeshProUGUI partText; // Текст "Лезвие: 3 слитка"
@@ -21,14 +33,17 @@ public class AnvilUIManager : MonoBehaviour
     [System.Serializable]
     public class ItemRecipe
     {
-        public string itemName;                  // Название предмета (IronSword, IronPickaxe)
+        public string itemName;                  // Название предмета (IronSword, CopperPickaxe...)
+        public MaterialType requiredMaterial;    // Требуемый материал (должен совпадать у обеих деталей!)
         public string part1Name;                 // Деталь 1 (Blade или PickaxeHead)
-        public int part1Count;                   // Сколько нужно (обычно 1)
-        public string part2Name;                 // Деталь 2 (Handle - универсальная)
-        public int part2Count;                   // Сколько нужно (обычно 1)
+        public int part1Count;                   // Сколько нужно (1)
+        public string part2Name;                 // Деталь 2 (Handle)
+        public int part2Count;                   // Сколько нужно (1)
         public Image itemIcon;                   // Иконка предмета
         public TextMeshProUGUI itemText;         // Текст "Железный меч"
         public TextMeshProUGUI partsText;        // Текст "Нужно: Лезвие + Рукоять"
+        public TextMeshProUGUI havePartsText;    // Текст "У вас: Лезвие x1, Рукоять x1"
+        public TextMeshProUGUI errorText;        // Текст ошибки (если материалы не совпадают)
         public Button craftButton;               // Кнопка "Собрать"
     }
 
@@ -59,17 +74,14 @@ public class AnvilUIManager : MonoBehaviour
 
     private void Start()
     {
-        // Кнопка закрытия
         if (closeButton != null)
             closeButton.onClick.AddListener(CloseAnvil);
 
-        // Переключение вкладок
         if (tabPartsBtn != null)
             tabPartsBtn.onClick.AddListener(() => SwitchTab(partsTab));
         if (tabAssemblyBtn != null)
             tabAssemblyBtn.onClick.AddListener(() => SwitchTab(assemblyTab));
 
-        // Настраиваем кнопки рецептов деталей
         foreach (var recipe in partRecipes)
         {
             if (recipe.craftButton != null)
@@ -79,7 +91,6 @@ public class AnvilUIManager : MonoBehaviour
             }
         }
 
-        // Настраиваем кнопки рецептов предметов
         foreach (var recipe in itemRecipes)
         {
             if (recipe.craftButton != null)
@@ -89,11 +100,9 @@ public class AnvilUIManager : MonoBehaviour
             }
         }
 
-        // По умолчанию открываем вкладку деталей
         SwitchTab(partsTab);
     }
 
-    // 🔹 Переключение вкладок
     private void SwitchTab(GameObject newTab)
     {
         if (_activeTab != null) _activeTab.SetActive(false);
@@ -102,14 +111,12 @@ public class AnvilUIManager : MonoBehaviour
         UpdateAllTabs();
     }
 
-    // 🔹 Обновить все рецепты
     public void UpdateAllTabs()
     {
         UpdatePartRecipes();
         UpdateItemRecipes();
     }
 
-    // 🔹 Обновить доступность рецептов деталей
     private void UpdatePartRecipes()
     {
         if (PlayerInventory.Instance == null) return;
@@ -127,28 +134,60 @@ public class AnvilUIManager : MonoBehaviour
         }
     }
 
-    // 🔹 Обновить доступность рецептов предметов
     private void UpdateItemRecipes()
     {
         if (PlayerInventory.Instance == null) return;
 
         foreach (var recipe in itemRecipes)
         {
-            bool hasPart1 = PlayerInventory.Instance.GetOreCount(recipe.part1Name) >= recipe.part1Count;
-            bool hasPart2 = PlayerInventory.Instance.GetOreCount(recipe.part2Name) >= recipe.part2Count;
-            bool canCraft = hasPart1 && hasPart2;
+            int havePart1 = PlayerInventory.Instance.GetOreCount(recipe.part1Name);
+            int havePart2 = PlayerInventory.Instance.GetOreCount(recipe.part2Name);
+            
+            // 🔹 ПРОВЕРКА: Материалы должны совпадать!
+            bool materialsMatch = CheckMaterialsMatch(recipe.part1Name, recipe.part2Name, recipe.requiredMaterial);
+            bool hasEnoughParts = havePart1 >= recipe.part1Count && havePart2 >= recipe.part2Count;
+            bool canCraft = materialsMatch && hasEnoughParts;
             
             if (recipe.partsText != null)
                 recipe.partsText.text = $"Нужно: {recipe.part1Name}×{recipe.part1Count} + {recipe.part2Name}×{recipe.part2Count}";
+            
+            if (recipe.havePartsText != null)
+                recipe.havePartsText.text = $"У вас: {recipe.part1Name}×{havePart1}, {recipe.part2Name}×{havePart2}";
+            
+            // 🔹 Показываем ошибку если материалы не совпадают
+            if (recipe.errorText != null)
+            {
+                if (!materialsMatch && hasEnoughParts)
+                {
+                    recipe.errorText.text = "❌ Материалы не совпадают!";
+                    recipe.errorText.color = Color.red;
+                }
+                else
+                {
+                    recipe.errorText.text = "";
+                }
+            }
+            
             if (recipe.craftButton != null)
                 recipe.craftButton.interactable = canCraft;
         }
     }
 
-    // 🔹 Создать деталь
+    // 🔹 Проверка совпадения материалов
+    private bool CheckMaterialsMatch(string part1Name, string part2Name, MaterialType requiredMaterial)
+    {
+        // Находим материалы обеих деталей в рецептах
+        PartRecipe part1Recipe = Array.Find(partRecipes, r => r.partName == part1Name && r.material == requiredMaterial);
+        PartRecipe part2Recipe = Array.Find(partRecipes, r => r.partName == part2Name && r.material == requiredMaterial);
+        
+        // Обе детали должны существовать с нужным материалом
+        return part1Recipe != null && part2Recipe != null;
+    }
+
+    // 🔹 ЭТАП 1: Создать деталь из слитков
     public void CraftPart(string partName)
     {
-        var recipe = System.Array.Find(partRecipes, r => r.partName == partName);
+        var recipe = Array.Find(partRecipes, r => r.partName == partName);
         if (recipe == null) return;
 
         int haveIngots = PlayerInventory.Instance.GetOreCount(recipe.requiredIngot);
@@ -157,27 +196,34 @@ public class AnvilUIManager : MonoBehaviour
             PlayerInventory.Instance.RemoveOre(recipe.requiredIngot, recipe.ingotsNeeded);
             PlayerInventory.Instance.AddPart(recipe.partName, 1);
             
-            Debug.Log($"🔨 Создана деталь: {recipe.partName}");
+            Debug.Log($"🔨 Создана деталь: {recipe.partName} ({recipe.material})");
             UpdateAllTabs();
         }
     }
 
-    // 🔹 Собрать предмет
+    // 🔹 ЭТАП 2: Собрать предмет из деталей (ПРОВЕРКА МАТЕРИАЛОВ!)
     public void AssembleItem(string itemName)
     {
-        var recipe = System.Array.Find(itemRecipes, r => r.itemName == itemName);
+        var recipe = Array.Find(itemRecipes, r => r.itemName == itemName);
         if (recipe == null) return;
 
-        bool hasPart1 = PlayerInventory.Instance.GetOreCount(recipe.part1Name) >= recipe.part1Count;
-        bool hasPart2 = PlayerInventory.Instance.GetOreCount(recipe.part2Name) >= recipe.part2Count;
+        int havePart1 = PlayerInventory.Instance.GetOreCount(recipe.part1Name);
+        int havePart2 = PlayerInventory.Instance.GetOreCount(recipe.part2Name);
 
-        if (hasPart1 && hasPart2)
+        // 🔹 Проверка материалов
+        if (!CheckMaterialsMatch(recipe.part1Name, recipe.part2Name, recipe.requiredMaterial))
+        {
+            Debug.LogError($"❌ ОШИБКА: Материалы не совпадают для {recipe.itemName}!");
+            return;
+        }
+
+        if (havePart1 >= recipe.part1Count && havePart2 >= recipe.part2Count)
         {
             PlayerInventory.Instance.RemovePart(recipe.part1Name, recipe.part1Count);
             PlayerInventory.Instance.RemovePart(recipe.part2Name, recipe.part2Count);
             PlayerInventory.Instance.AddItem(recipe.itemName, 1);
             
-            Debug.Log($"⚔️ Собран предмет: {recipe.itemName}");
+            Debug.Log($"⚔️ Собран предмет: {recipe.itemName} ({recipe.requiredMaterial})");
             UpdateAllTabs();
         }
     }
