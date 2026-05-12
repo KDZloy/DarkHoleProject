@@ -5,21 +5,28 @@ public class SwordCombat : MonoBehaviour
 {
     [Header("🎯 Настройки")]
     [SerializeField] private Camera playerCamera;
-    [SerializeField] private Animator animator;          // Аниматор меча или руки
-    [SerializeField] private float attackRange = 2.5f;
-    [SerializeField] private LayerMask enemyLayer;       // Слой Enemy
+    [SerializeField] private Animator animator;
+    
+    [Header("⚔️ Зона удара (Сфера)")]
+    [SerializeField] private float hitOffset = 1.2f;      // Насколько вперед от камеры бьет меч
+    [SerializeField] private float attackRadius = 1.5f;   // Радиус "шара" удара (увеличь, если мажешь)
+    [SerializeField] private LayerMask enemyLayer;        // Слой, на котором стоит Зомби
 
-    [Header("⚔️ Параметры урона")]
+    [Header("💥 Урон")]
     [SerializeField] private float baseDamage = 25f;
 
-    [Header("⏱️ Тайминг и Анимация")]
+    [Header("⏱️ Тайминг")]
     [SerializeField] private string attackTriggerName = "Attack";
-    [SerializeField] private float hitTiming = 0.25f;    // Момент касания в анимации
+    [SerializeField] private float hitTiming = 0.25f;     // Момент удара в анимации
     [SerializeField] private float attackCooldown = 0.7f;
 
     private bool isAttacking = false;
 
-    // 🔹 Вызывается из WeaponManager при нажатии ЛКМ
+    private void Awake()
+    {
+        if (playerCamera == null) playerCamera = Camera.main;
+    }
+
     public void Swing()
     {
         if (isAttacking) return;
@@ -30,52 +37,72 @@ public class SwordCombat : MonoBehaviour
     {
         isAttacking = true;
 
-        // 1. Запуск анимации
+        // 1. Анимация
         if (animator != null)
             animator.SetTrigger(attackTriggerName);
 
-        // 2. Ждём момент удара (синхронизация с анимацией)
+        // 2. Ждем момента удара
         yield return new WaitForSeconds(hitTiming);
 
         // 3. Наносим урон
         ApplyDamage();
 
-        // 4. Кулдаун (защита от спама)
+        // 4. Кулдаун
         yield return new WaitForSeconds(attackCooldown);
-
         isAttacking = false;
     }
 
     private void ApplyDamage()
     {
-        // Луч из центра экрана (как в PlayerMiner)
-        Ray ray = playerCamera.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0f));
+        if (playerCamera == null) return;
 
-        if (Physics.Raycast(ray, out RaycastHit hit, attackRange, enemyLayer))
+        // 🔹 Точка удара: позиция камеры + смотрим вперед
+        Vector3 hitPoint = playerCamera.transform.position + playerCamera.transform.forward * hitOffset;
+
+        // 🔹 ВИЗУАЛИЗАЦИЯ (Красная сфера покажет, куда ты бьешь)
+        Debug.DrawRay(hitPoint, Vector3.up * 0.5f, Color.red, 0.5f);
+
+        // 🔹 Ищем ВСЕХ врагов в радиусе сферы
+        Collider[] hits = Physics.OverlapSphere(hitPoint, attackRadius, enemyLayer);
+
+        // Чтобы не ударить одного зомби дважды за взмах
+        System.Collections.Generic.HashSet<GameObject> hitEnemies = new System.Collections.Generic.HashSet<GameObject>();
+
+        foreach (Collider col in hits)
         {
-            // Визуализация луча в редакторе
-            Debug.DrawRay(ray.origin, ray.direction * attackRange, Color.red, 0.3f);
+            ZombieAI zombie = col.GetComponent<ZombieAI>();
+            if (zombie == null) zombie = col.GetComponentInParent<ZombieAI>();
 
-            // Ищем зомби на коллайдере или родителе
-            ZombieAI zombie = hit.collider.GetComponent<ZombieAI>();
-            if (zombie == null) zombie = hit.collider.GetComponentInParent<ZombieAI>();
-
-            if (zombie != null)
+            if (zombie != null && !hitEnemies.Contains(zombie.gameObject))
             {
+                hitEnemies.Add(zombie.gameObject);
                 zombie.TakeDamage(Mathf.RoundToInt(baseDamage));
                 Debug.Log($"⚔️ Меч попал в {zombie.name} | Урон: {baseDamage}");
             }
-            else
-            {
-                Debug.Log("⚔️ Попал в объект, но на нём нет ZombieAI");
-            }
         }
-        else
+
+        if (hitEnemies.Count == 0)
         {
-            Debug.Log("⚔️ Меч: Промах");
+            Debug.Log("⚔️ Промах! (Враги вне радиуса удара)");
         }
     }
 
-    // 🔹 Для смены урона при крафте (например, алмазный меч = 40)
-    public void SetDamage(float damage) => baseDamage = damage;
+    // Рисуем сферу удара в редакторе, чтобы ты видел зону поражения
+    private void OnDrawGizmosSelected()
+    {
+        if (playerCamera == null) return;
+        Vector3 hitPoint = playerCamera.transform.position + playerCamera.transform.forward * hitOffset;
+        Gizmos.color = new Color(1, 0, 0, 0.3f); // Полупрозрачный красный
+        Gizmos.DrawSphere(hitPoint, attackRadius);
+    }
+    public void SetDamage(float newDamage)
+{
+    baseDamage = newDamage;
+    Debug.Log($"[Меч] Урон обновлен: {baseDamage}");
+}
+    public void SetStats(float newDamage, int newDurability)
+    {
+        baseDamage = newDamage;
+        Debug.Log($"[Меч] Обновлен урон: {baseDamage}");
+    }
 }

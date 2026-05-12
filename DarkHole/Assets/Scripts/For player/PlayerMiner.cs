@@ -91,4 +91,13 @@ public class PlayerMiner : MonoBehaviour
             Debug.Log("[Кирка] 💨 Промах (луч не попал в слой Block или слишком далеко)");
         }
     }
+    public void SetStats(float newDamage, float newPenetration, int newDurability)
+    {
+        damage = newDamage;
+        penetration = newPenetration;
+        // Если у тебя есть переменная прочности в кирке, обнови её тут:
+        // durability = newDurability; 
+        
+        Debug.Log($"[Кирка] Обновлены статы: Урон={damage}, Пробитие={penetration}");
+    }
 }

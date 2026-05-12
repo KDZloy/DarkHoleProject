@@ -202,32 +202,42 @@ public class AnvilUIManager : MonoBehaviour
     }
 
     // 🔹 ЭТАП 2: Собрать предмет из деталей (ПРОВЕРКА МАТЕРИАЛОВ!)
-    public void AssembleItem(string itemName)
+    // В AnvilUIManager.cs
+// 🔹 ЭТАП 2: Собрать предмет из деталей
+public void AssembleItem(string itemName)
+{
+    var recipe = Array.Find(itemRecipes, r => r.itemName == itemName);
+    if (recipe == null) return;
+
+    int havePart1 = PlayerInventory.Instance.GetOreCount(recipe.part1Name);
+    int havePart2 = PlayerInventory.Instance.GetOreCount(recipe.part2Name);
+
+    if (!CheckMaterialsMatch(recipe.part1Name, recipe.part2Name, recipe.requiredMaterial))
     {
-        var recipe = Array.Find(itemRecipes, r => r.itemName == itemName);
-        if (recipe == null) return;
-
-        int havePart1 = PlayerInventory.Instance.GetOreCount(recipe.part1Name);
-        int havePart2 = PlayerInventory.Instance.GetOreCount(recipe.part2Name);
-
-        // 🔹 Проверка материалов
-        if (!CheckMaterialsMatch(recipe.part1Name, recipe.part2Name, recipe.requiredMaterial))
-        {
-            Debug.LogError($"❌ ОШИБКА: Материалы не совпадают для {recipe.itemName}!");
-            return;
-        }
-
-        if (havePart1 >= recipe.part1Count && havePart2 >= recipe.part2Count)
-        {
-            PlayerInventory.Instance.RemovePart(recipe.part1Name, recipe.part1Count);
-            PlayerInventory.Instance.RemovePart(recipe.part2Name, recipe.part2Count);
-            PlayerInventory.Instance.AddItem(recipe.itemName, 1);
-            
-            Debug.Log($"⚔️ Собран предмет: {recipe.itemName} ({recipe.requiredMaterial})");
-            UpdateAllTabs();
-            WeaponManager.Instance?.EquipByItemName(recipe.itemName);
-        }
+        Debug.LogError($"❌ ОШИБКА: Материалы не совпадают для {recipe.itemName}!");
+        return;
     }
+
+    if (havePart1 >= recipe.part1Count && havePart2 >= recipe.part2Count)
+    {
+        PlayerInventory.Instance.RemovePart(recipe.part1Name, recipe.part1Count);
+        PlayerInventory.Instance.RemovePart(recipe.part2Name, recipe.part2Count);
+        
+        // 🔥 ТУТ ИЗМЕНЕНИЕ: Вызываем умный метод в WeaponManager
+        if (WeaponManager.Instance != null)
+        {
+            WeaponManager.Instance.CraftAndEquip(recipe.itemName);
+        }
+        else
+        {
+            // Если менеджера нет (например, крафтим еду), просто добавляем в инвентарь
+            PlayerInventory.Instance.AddItem(recipe.itemName, 1);
+        }
+
+        Debug.Log($"️ Собран предмет: {recipe.itemName}");
+        UpdateAllTabs();
+    }
+}
 
     public void CloseAnvil()
     {

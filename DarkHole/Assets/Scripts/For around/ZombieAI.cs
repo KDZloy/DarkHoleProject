@@ -7,7 +7,7 @@ public class ZombieAI : MonoBehaviour
     [SerializeField] private Transform player;
     [SerializeField] private float detectionRange = 15f;
     [SerializeField] private float attackRange = 2f;
-    [SerializeField] private float despawnTime = 10f; // Время до возврата
+    [SerializeField] private float despawnTime = 10f;
 
     [Header("🏃 Скорость")]
     [SerializeField] private float walkSpeed = 2f;
@@ -31,14 +31,17 @@ public class ZombieAI : MonoBehaviour
     [SerializeField] private string deathAnimBool = "IsDead";
     [SerializeField] private string speedAnimFloat = "Speed";
 
+    [Header("🩸 UI Здоровья")]
+    [SerializeField] private EnemyHealthBar healthBar;
+
     [Header("🏠 Спавн")]
-    [SerializeField] private Vector3 spawnPoint; // Точка спавна
+    [SerializeField] private Vector3 spawnPoint;
 
     private float lastAttackTime = 0f;
     private bool isDead = false;
     private bool isAttacking = false;
     private float lastSeenPlayerTime = 0f;
-    private bool isReturning = false; // 🔹 Возвращается ли зомби
+    private bool isReturning = false;
 
     private void Start()
     {
@@ -50,7 +53,6 @@ public class ZombieAI : MonoBehaviour
         if (animator != null)
             animator.applyRootMotion = false;
 
-        // 🔹 Сохраняем точку спавна
         spawnPoint = transform.position;
 
         GameObject playerObj = GameObject.FindGameObjectWithTag("Player");
@@ -59,6 +61,12 @@ public class ZombieAI : MonoBehaviour
 
         if (animator != null)
             animator.SetBool(deathAnimBool, false);
+
+        // 🔹 Инициализируем полоску здоровья
+        if (healthBar != null)
+        {
+            healthBar.Init(maxHealth);
+        }
     }
 
     private void Update()
@@ -120,7 +128,7 @@ public class ZombieAI : MonoBehaviour
                     animator.SetFloat(speedAnimFloat, 0f);
             }
 
-            // 🔹 Проверка: если игрока нет рядом больше N секунд — ВОЗВРАЩАЕМСЯ
+            // 🔹 Если игрока нет рядом больше N секунд — ВОЗВРАЩАЕМСЯ
             if (Time.time - lastSeenPlayerTime > despawnTime)
             {
                 ReturnToSpawn();
@@ -152,7 +160,6 @@ public class ZombieAI : MonoBehaviour
                     animator.SetFloat(speedAnimFloat, 0f);
                     animator.SetBool(deathAnimBool, false);
                 }
-
                 Debug.Log("🧟 Зомби вернулся на точку спавна!");
             }
         }
@@ -199,12 +206,19 @@ public class ZombieAI : MonoBehaviour
 
     private void ResetAttack() { isAttacking = false; }
 
+    // 🔹 МЕТОД ПОЛУЧЕНИЯ УРОНА (ЗДЕСЬ БЫЛ ОШИБОЧНЫЙ КОД В UPDATE)
     public void TakeDamage(int amount)
     {
         if (isDead) return;
 
         currentHealth -= amount;
         Debug.Log($"🧟 Зомби получил {amount} урона. Здоровье: {currentHealth}/{maxHealth}");
+
+        // 🔹 ОБНОВЛЯЕМ UI СРАЗУ ПОСЛЕ УДАРА
+        if (healthBar != null)
+        {
+            healthBar.UpdateHealth(currentHealth);
+        }
 
         if (animator != null && currentHealth > 0)
             animator.SetTrigger("Hit");
@@ -227,7 +241,6 @@ public class ZombieAI : MonoBehaviour
         Destroy(gameObject, 3f);
     }
 
-    // 🔹 Зомби возвращается в точку спавна
     private void ReturnToSpawn()
     {
         isReturning = true;
@@ -236,15 +249,12 @@ public class ZombieAI : MonoBehaviour
 
     private void OnDrawGizmosSelected()
     {
-        // Радиус обнаружения
         Gizmos.color = Color.yellow;
         Gizmos.DrawWireSphere(transform.position, detectionRange);
 
-        // Радиус атаки
         Gizmos.color = Color.red;
         Gizmos.DrawWireSphere(transform.position, attackRange);
 
-        // Точка спавна
         Gizmos.color = Color.green;
         Gizmos.DrawSphere(spawnPoint, 0.5f);
         Gizmos.DrawLine(transform.position, spawnPoint);
