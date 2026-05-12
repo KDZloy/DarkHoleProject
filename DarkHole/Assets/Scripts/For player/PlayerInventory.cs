@@ -127,4 +127,43 @@ public class PlayerInventory : MonoBehaviour
                 OreUIManager.Instance.UpdateAllUI();
         }
     }
+    public void ClearInventory()
+    {
+        _oreCounts.Clear();
+        Debug.Log("🗑️ Инвентарь очищен! Все ресурсы потеряны.");
+        
+        // Обновляем UI, если он есть
+        if (OreUIManager.Instance != null)
+            OreUIManager.Instance.UpdateAllUI();
+    }
+
+    // 🔹 Очистка только руды и слитков (оружие и детали остаются)
+    public void ClearResourcesOnly()
+    {
+        // Создаём список ключей для безопасного удаления
+        List<string> keysToRemove = new List<string>();
+        
+        foreach (var kvp in _oreCounts)
+        {
+            string name = kvp.Key;
+            // Удаляем всё, кроме оружия и деталей
+            if (!name.Contains("Pickaxe") && 
+                !name.Contains("Sword") && 
+                !name.Contains("Blade") && 
+                !name.Contains("Handle") && 
+                !name.Contains("Head"))
+            {
+                keysToRemove.Add(name);
+            }
+        }
+        
+        foreach (string key in keysToRemove)
+        {
+            _oreCounts.Remove(key);
+            Debug.Log($"🗑️ Удалено: {key}");
+        }
+        
+        if (OreUIManager.Instance != null)
+            OreUIManager.Instance.UpdateAllUI();
+    }
 }
