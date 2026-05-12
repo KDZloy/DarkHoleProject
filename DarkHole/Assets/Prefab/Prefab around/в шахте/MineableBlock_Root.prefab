@@ -1,0 +1,106 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &7802779751297374478
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 5303851414465967546}
+  - component: {fileID: 579219741688667631}
+  - component: {fileID: 6283375707973466131}
+  - component: {fileID: 3329941185561682833}
+  m_Layer: 8
+  m_Name: MineableBlock_Root
+  m_TagString: Block
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &5303851414465967546
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7802779751297374478}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0.7071068, y: 0, z: 0, w: 0.7071068}
+  m_LocalPosition: {x: -29.82, y: 0.29, z: -0.37}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: -90, y: 0, z: 0}
+--- !u!65 &579219741688667631
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7802779751297374478}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 2.17, y: 1.85, z: 1.49}
+  m_Center: {x: 0, y: 0, z: 0}
+--- !u!114 &6283375707973466131
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7802779751297374478}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dde31f5b57aab094ebf4774a782bc66e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MineableBlock
+  baseHp: 100
+  hardness: 10
+  stageModels:
+  - {fileID: 4925347977130688552, guid: 78350a8d9e065b641b8c70f16fa58880, type: 3}
+  - {fileID: 1728494323836270098, guid: a6685be20c4d4a149b5322724d254d75, type: 3}
+  - {fileID: 6683794625860999571, guid: 087e1560923a6c9489a1add884caa48a, type: 3}
+  oreDrops:
+  - orePrefab: {fileID: 2639770678146360157, guid: a40e5c6afd49312448e0625cc1dfec25, type: 3}
+    weight: 40
+  - orePrefab: {fileID: 8033767964546055797, guid: 6c0c693163796a444abcb4871e232cb7, type: 3}
+    weight: 50
+  - orePrefab: {fileID: 1125530416976297600, guid: 959dc0c815b5e2f478ebb3b1f5f6ddaf, type: 3}
+    weight: 7
+  - orePrefab: {fileID: 1249324711217220934, guid: db72fbd4a0f186746adb8a65dcdc46ae, type: 3}
+    weight: 1
+  - orePrefab: {fileID: 2702919020255506800, guid: a8c91924c82516b43abcf44b985cd1c5, type: 3}
+    weight: 1
+  - orePrefab: {fileID: 6280920589459109267, guid: 765d176d12de2ff4e895b146fb511255, type: 3}
+    weight: 1
+  dropForce: 2
+  dropSpread: 0.5
+--- !u!114 &3329941185561682833
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7802779751297374478}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8dc025461299a0f4bb9157c775dad9c7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BlockRespawner
+  respawnTime: 60
+  blockPrefab: {fileID: 7802779751297374478}
+  positionVariance: 0.5
+  randomRotation: 0

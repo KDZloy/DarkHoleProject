@@ -116,17 +116,15 @@ public class PlayerInventory : MonoBehaviour
             Debug.Log($"   {kvp.Key}: {kvp.Value}");
         Debug.Log("🎒 =================");
     }
-    public void RemoveItem(string itemName, int amount = 1)
-{
-    if (_oreCounts.ContainsKey(itemName))
+        // 🔹 Добавить в PlayerInventory.cs
+    public void RemoveItem(string itemName)
     {
-        _oreCounts[itemName] -= amount;
-        if (_oreCounts[itemName] <= 0)
+        if (_oreCounts.ContainsKey(itemName))
+        {
             _oreCounts.Remove(itemName);
-        
-        Debug.Log($"🗑️ Удален предмет: {itemName}");
-        // Обновляем UI, если нужно
-        if (OreUIManager.Instance != null) OreUIManager.Instance.UpdateAllUI();
+            Debug.Log($"🗑️ Предмет удален: {itemName}");
+            if (OreUIManager.Instance != null)
+                OreUIManager.Instance.UpdateAllUI();
+        }
     }
-}
 }

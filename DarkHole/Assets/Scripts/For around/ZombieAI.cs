@@ -44,30 +44,36 @@ public class ZombieAI : MonoBehaviour
     private bool isReturning = false;
 
     private void Start()
+{
+    // 🔹 Получаем здоровье из менеджера (вместо фиксированного maxHealth)
+    if (ZombieSpawnerManager.Instance != null)
     {
-        currentHealth = maxHealth;
-
-        if (agent == null) agent = GetComponent<NavMeshAgent>();
-        if (animator == null) animator = GetComponent<Animator>();
-
-        if (animator != null)
-            animator.applyRootMotion = false;
-
-        spawnPoint = transform.position;
-
-        GameObject playerObj = GameObject.FindGameObjectWithTag("Player");
-        if (playerObj != null)
-            player = playerObj.transform;
-
-        if (animator != null)
-            animator.SetBool(deathAnimBool, false);
-
-        // 🔹 Инициализируем полоску здоровья
-        if (healthBar != null)
-        {
-            healthBar.Init(maxHealth);
-        }
+        maxHealth = ZombieSpawnerManager.Instance.GetNextZombieHealth();
     }
+    
+    currentHealth = maxHealth; // Применяем новое значение
+
+    if (agent == null) agent = GetComponent<NavMeshAgent>();
+    if (animator == null) animator = GetComponent<Animator>();
+
+    if (animator != null)
+        animator.applyRootMotion = false;
+
+    spawnPoint = transform.position;
+
+    GameObject playerObj = GameObject.FindGameObjectWithTag("Player");
+    if (playerObj != null)
+        player = playerObj.transform;
+
+    if (animator != null)
+        animator.SetBool(deathAnimBool, false);
+
+    // Инициализация полоски здоровья (если есть)
+    if (healthBar != null)
+    {
+        healthBar.Init(maxHealth);
+    }
+}
 
     private void Update()
     {

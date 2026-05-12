@@ -65,7 +65,7 @@ public class PlayerHealth : MonoBehaviour
         // Обновляем текст
         if (healthText != null)
         {
-            healthText.text = $"❤️ {currentHealth}/{maxHealth}";
+            healthText.text = $" {currentHealth}/{maxHealth}";
         }
 
         // Обновляем Slider
@@ -86,8 +86,16 @@ public class PlayerHealth : MonoBehaviour
     private void Die()
     {
         currentHealth = 0;
-        Debug.Log("💀 ИГРОК УМЕР! Перезапуск сцены...");
+        Debug.Log("💀 ИГРОК УМЕР! Потеря ресурсов и перезапуск...");
         UpdateUI();
+        
+        // 🔹 ШТРАФ: теряем все руды и слитки
+        if (PlayerInventory.Instance != null)
+        {
+            PlayerInventory.Instance.ClearResourcesOnly(); // или .ClearInventory() если хочешь удалить ВСЁ
+        }
+        
+        // 🔹 Пауза перед рестартом
         Invoke(nameof(RestartScene), 2f);
         Time.timeScale = 0f;
     }
@@ -95,8 +103,14 @@ public class PlayerHealth : MonoBehaviour
     private void RestartScene()
     {
         Time.timeScale = 1f;
-        UnityEngine.SceneManagement.SceneManager.LoadScene(0);
+        
+        // 🔹 Перезагружаем текущую сцену (игрок заспавнится в начальной точке)
+        string currentScene = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
+        UnityEngine.SceneManagement.SceneManager.LoadScene(currentScene);
+        
+        Debug.Log("🔄 Сцена перезагружена. Игрок возрождён в начале!");
     }
+    
 
     // 🔹 Публичные геттеры для других скриптов
     public int GetCurrentHealth() => currentHealth;

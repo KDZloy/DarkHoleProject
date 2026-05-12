@@ -1,5 +1,4 @@
 using UnityEngine;
-using System.Collections.Generic;
 
 public enum WeaponType { None, Pickaxe, Sword }
 
@@ -13,10 +12,10 @@ public class WeaponManager : MonoBehaviour
 
     [Header("🔧 Скрипты оружия")]
     public PlayerMiner playerMiner;
-    public SwordCombat swordCombat;
+    public SwordCombat swordScript;
 
-    public WeaponType CurrentWeaponType { get; private set; }
-    private string _currentEquippedName = ""; // Название текущего предмета (например "CopperPickaxe")
+    public WeaponType CurrentWeapon { get; private set; }
+    private string _currentEquippedName = "";
 
     private void Awake()
     {
@@ -26,91 +25,125 @@ public class WeaponManager : MonoBehaviour
 
     private void Start()
     {
-        // По умолчанию экипируем кирку (или оставь None, если хочешь начинать без оружия)
         EquipWeapon(WeaponType.Pickaxe);
     }
 
     private void Update()
     {
-        // Управление для тестов
         if (UnityEngine.Input.GetKeyDown(KeyCode.Alpha1)) EquipWeapon(WeaponType.Sword);
         if (UnityEngine.Input.GetKeyDown(KeyCode.Alpha2)) EquipWeapon(WeaponType.Pickaxe);
 
         if (UnityEngine.Input.GetMouseButtonDown(0))
         {
-            if (CurrentWeaponType == WeaponType.Sword && swordCombat != null)
-                swordCombat.Swing();
-            else if (CurrentWeaponType == WeaponType.Pickaxe && playerMiner != null)
-                playerMiner.Swing();
+            if (CurrentWeapon == WeaponType.Sword) swordScript?.Swing();
+            else if (CurrentWeapon == WeaponType.Pickaxe) playerMiner?.Swing();
         }
     }
 
-    // 🔹 Переключение типа (Меч/Кирка)
     public void EquipWeapon(WeaponType type)
     {
-        CurrentWeaponType = type;
+        CurrentWeapon = type;
         if (pickaxeHolder) pickaxeHolder.SetActive(type == WeaponType.Pickaxe);
         if (swordHolder) swordHolder.SetActive(type == WeaponType.Sword);
-        
-        // Включаем скрипты
-        if (playerMiner) playerMiner.enabled = type == WeaponType.Pickaxe;
-        if (swordCombat) swordCombat.enabled = type == WeaponType.Sword;
+        Debug.Log($"🔫 Экипировано: {type}");
     }
 
-    // 🔹 ГЛАВНЫЙ МЕТОД: Крафт и смена оружия
-    // Вызывается из AnvilUIManager
     public void CraftAndEquip(string newItemName)
     {
-        // 1. Определяем тип нового предмета
-        WeaponType newType = newItemName.Contains("Sword") ? WeaponType.Sword : WeaponType.Pickaxe;
+        WeaponInfo info = GetWeaponInfo(newItemName);
 
-        // 2. Если уже что-то экипировано того же типа — удаляем старое
-        // (Например, если была WoodenPickaxe, и мы крафтим CopperPickaxe)
-        if (!string.IsNullOrEmpty(_currentEquippedName) && CurrentWeaponType == newType)
+        if (!string.IsNullOrEmpty(_currentEquippedName))
         {
-            PlayerInventory.Instance.RemoveItem(_currentEquippedName);
-            Debug.Log($"🗑️ Удалено старое: {_currentEquippedName}");
+            WeaponInfo oldInfo = GetWeaponInfo(_currentEquippedName);
+            if (oldInfo.Type == info.Type)
+            {
+                PlayerInventory.Instance.RemoveItem(_currentEquippedName);
+                Debug.Log($"🗑️ Удалено старое: {_currentEquippedName}");
+            }
         }
 
-        // 3. Добавляем новый предмет в инвентарь
         PlayerInventory.Instance.AddItem(newItemName, 1);
         _currentEquippedName = newItemName;
-
-        // 4. Экипируем и применяем статы
-        EquipWeapon(newType);
-        ApplyStats(newItemName);
-
-        Debug.Log($"⚔️ Экипировано и настроено: {newItemName}");
+        EquipWeapon(info.Type);
+        ApplyStats(info.Damage, info.Type);
+        
+        Debug.Log($"⚔️ Крафт завершен: {_currentEquippedName} экипировано! Урон: {info.Damage}");
     }
 
-    // 🔹 База характеристик (ЗАПОЛНИ ТУТ СВОИ ЦИФРЫ)
-    private void ApplyStats(string itemName)
+    private struct WeaponInfo
     {
-        float damage = 10;
-        float penetration = 0;
-        int durability = 100;
+        public WeaponType Type;
+        public float Damage;      // 🔹 float, а не int
+        public string Material;
+    }
 
-        // --- КИРКИ ---
-        if (itemName == "WoodenPickaxe") { damage = 10; penetration = 5; durability = 50; }
-        else if (itemName == "StonePickaxe") { damage = 15; penetration = 10; durability = 100; }
-        else if (itemName == "CopperPickaxe") { damage = 25; penetration = 15; durability = 200; }
-        else if (itemName == "IronPickaxe") { damage = 35; penetration = 25; durability = 350; }
-        else if (itemName == "DiamondPickaxe") { damage = 50; penetration = 40; durability = 1000; }
-
-        // --- МЕЧИ ---
-        else if (itemName == "WoodenSword") { damage = 15; penetration = 0; durability = 50; }
-        else if (itemName == "StoneSword") { damage = 20; penetration = 5; durability = 100; }
-        else if (itemName == "CopperSword") { damage = 30; penetration = 10; durability = 200; }
-        else if (itemName == "DiamondSword") { damage = 60; penetration = 30; durability = 1000; }
-
-        // Применяем статы к скриптам
-        if (CurrentWeaponType == WeaponType.Pickaxe && playerMiner != null)
+    private WeaponInfo GetWeaponInfo(string itemName)
+    {
+        WeaponInfo info = new WeaponInfo();
+        
+        if (itemName.EndsWith("P"))
         {
-            playerMiner.SetStats(damage, penetration, durability);
+            info.Type = WeaponType.Pickaxe;
+            info.Material = itemName.Substring(0, itemName.Length - 1);
         }
-        else if (CurrentWeaponType == WeaponType.Sword && swordCombat != null)
+        else
         {
-            swordCombat.SetStats(damage, durability);
+            info.Type = WeaponType.Sword;
+            info.Material = itemName;
         }
+
+        // Урон по материалам (твои значения)
+        switch (info.Material)
+        {
+            case "Wood":    info.Damage = 10f; break;
+            case "Copper":  info.Damage = 20f; break;
+            case "Iron":    info.Damage = 25f; break;
+            case "Gold":    info.Damage = 30f; break;
+            case "Diamond": info.Damage = 40f; break;
+            case "Cobalt":  info.Damage = 50f; break;
+            default:        info.Damage = 10f; break;
+        }
+        return info;
+    }
+
+    // 🔹 ИСПРАВЛЕННЫЙ МЕТОД: теперь переменные объявлены правильно
+    private void ApplyStats(float damageValue, WeaponType type)
+    {
+        CurrentMaterial = ParseMaterial(_currentEquippedName); // ✅ ЗАПОМИНАЕМ МАТЕРИАЛ
+        float penetrationValue = damageValue * 0.6f; // Пробитие = 60% от урона
+
+        if (CurrentWeapon == WeaponType.Pickaxe && playerMiner != null)
+        {
+            playerMiner.SetStats(damageValue, penetrationValue); // ✅ Теперь работает!
+        }
+        else if (CurrentWeapon == WeaponType.Sword && swordScript != null)
+        {
+            swordScript.SetDamage(damageValue); // ✅ Теперь работает!
+        }
+    }
+        // 🔹 Добавь в начало класса (после CurrentWeapon)
+    public string CurrentMaterial { get; private set; } = "Wood";
+
+    // 🔹 Добавь в конец класса (перед последней })
+    // Определяет материал по названию предмета ("CopperP" -> "Copper")
+    private string ParseMaterial(string itemName)
+    {
+        if (string.IsNullOrEmpty(itemName)) return "Wood";
+        
+        string cleanName = itemName.EndsWith("P") ? itemName.Substring(0, itemName.Length - 1) : itemName;
+        
+        if (cleanName.Contains("Cobalt")) return "Cobalt";
+        if (cleanName.Contains("Diamond")) return "Diamond";
+        if (cleanName.Contains("Gold")) return "Gold";
+        if (cleanName.Contains("Iron")) return "Iron";
+        if (cleanName.Contains("Copper")) return "Copper";
+        if (cleanName.Contains("Wood")) return "Wood";
+        
+        return "Wood";
+    }
+
+    public void EquipByName(string itemName)
+    {
+        CraftAndEquip(itemName);
     }
 }

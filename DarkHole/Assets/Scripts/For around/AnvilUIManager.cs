@@ -185,21 +185,24 @@ public class AnvilUIManager : MonoBehaviour
     }
 
     // 🔹 ЭТАП 1: Создать деталь из слитков
-    public void CraftPart(string partName)
-    {
-        var recipe = Array.Find(partRecipes, r => r.partName == partName);
-        if (recipe == null) return;
+    // 🔹 ЭТАП 1: Создать деталь из слитков
+public void CraftPart(string partName)
+{
+    var recipe = Array.Find(partRecipes, r => r.partName == partName);
+    if (recipe == null) return;
 
-        int haveIngots = PlayerInventory.Instance.GetOreCount(recipe.requiredIngot);
-        if (haveIngots >= recipe.ingotsNeeded)
-        {
-            PlayerInventory.Instance.RemoveOre(recipe.requiredIngot, recipe.ingotsNeeded);
-            PlayerInventory.Instance.AddPart(recipe.partName, 1);
-            
-            Debug.Log($"🔨 Создана деталь: {recipe.partName} ({recipe.material})");
-            UpdateAllTabs();
-        }
+    int haveIngots = PlayerInventory.Instance.GetOreCount(recipe.requiredIngot);
+    if (haveIngots >= recipe.ingotsNeeded)
+    {
+        PlayerInventory.Instance.RemoveOre(recipe.requiredIngot, recipe.ingotsNeeded);
+        
+        // 🔹 Добавляем деталь в инвентарь (НЕ вызываем CraftAndEquip!)
+        PlayerInventory.Instance.AddPart(recipe.partName, 1);
+        
+        Debug.Log($"🔨 Создана деталь: {recipe.partName} ({recipe.material})");
+        UpdateAllTabs();
     }
+}
 
     // 🔹 ЭТАП 2: Собрать предмет из деталей (ПРОВЕРКА МАТЕРИАЛОВ!)
     // В AnvilUIManager.cs

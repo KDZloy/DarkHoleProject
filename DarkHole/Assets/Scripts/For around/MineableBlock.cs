@@ -10,7 +10,6 @@ public class MineableBlock : MonoBehaviour
     private float initialMaxHp;
 
     [Header("🎨 Модели стадий")]
-    [Tooltip("0: Целая | 1: Трещины | 2: Сильно повреждена")]
     [SerializeField] private GameObject[] stageModels = new GameObject[3]; 
 
     [Serializable]
@@ -22,7 +21,7 @@ public class MineableBlock : MonoBehaviour
     [SerializeField] private OreDrop[] oreDrops;
 
     [Header("⚙️ Физика выпадения")]
-    [SerializeField] private float dropForce = 1f;  // 🔹 УМЕНЬШЕНО с 5f до 1f
+    [SerializeField] private float dropForce = 1f;
     [SerializeField] private float dropSpread = 0.3f;
 
     private GameObject _currentModel;
@@ -35,6 +34,7 @@ public class MineableBlock : MonoBehaviour
         SwitchModel(0);
     }
 
+    // 🔹 Принимает только 2 параметра (как у тебя в PlayerMiner)
     public void TakeDamage(float damage, float penetration)
     {
         hardness = Mathf.Max(0, hardness - penetration);
@@ -45,9 +45,7 @@ public class MineableBlock : MonoBehaviour
         int newStage = percent > 0.66f ? 0 : (percent > 0.33f ? 1 : 2);
 
         if (newStage != _currentStageIndex)
-        {
             SwitchModel(newStage);
-        }
 
         if (currentHp <= 0)
             DestroyBlock();
@@ -55,14 +53,8 @@ public class MineableBlock : MonoBehaviour
 
     private void SwitchModel(int stageIndex)
     {
-        if (_currentModel != null)
-            Destroy(_currentModel);
-
-        if (stageIndex < 0 || stageIndex >= stageModels.Length || stageModels[stageIndex] == null)
-        {
-            Debug.LogWarning($"[Глыба] Модель для стадии {stageIndex} не назначена!");
-            return;
-        }
+        if (_currentModel != null) Destroy(_currentModel);
+        if (stageIndex < 0 || stageIndex >= stageModels.Length || stageModels[stageIndex] == null) return;
 
         _currentModel = Instantiate(stageModels[stageIndex], transform);
         _currentModel.transform.SetLocalPositionAndRotation(Vector3.zero, Quaternion.identity);
@@ -72,6 +64,8 @@ public class MineableBlock : MonoBehaviour
     private void DestroyBlock()
     {
         DropOre();
+        BlockRespawner respawner = GetComponent<BlockRespawner>();
+        respawner?.OnBlockDestroyed();
         Destroy(gameObject);
     }
 
@@ -79,7 +73,6 @@ public class MineableBlock : MonoBehaviour
     {
         if (oreDrops == null || oreDrops.Length == 0) return;
 
-        // 🔹 Выбор руды по весу
         float totalWeight = 0;
         foreach (var drop in oreDrops) totalWeight += drop.weight;
 
@@ -98,7 +91,6 @@ public class MineableBlock : MonoBehaviour
 
         if (chosenPrefab == null) return;
 
-        // 🔹 СПАВНИМ РОВНО 1 ЭКЗЕМПЛЯР
         Vector3 spawnPos = transform.position + new Vector3(
             UnityEngine.Random.Range(-dropSpread, dropSpread),
             0.2f,
@@ -109,25 +101,20 @@ public class MineableBlock : MonoBehaviour
 
         if (ore.TryGetComponent<Rigidbody>(out var rb))
         {
-            // 🔹 НАСТРОЙКА ФИЗИКИ
             rb.isKinematic = false;
             rb.useGravity = true;
-            rb.linearDamping = 0.5f;           // ✅ Сопротивление воздуха
+            rb.linearDamping = 0.5f;
             rb.angularDamping = 0.5f;
-            rb.collisionDetectionMode = CollisionDetectionMode.Discrete;
-
-            // 🔹 МИНИМАЛЬНАЯ СИЛА (чтобы не летело на 17м)
             Vector3 force = new Vector3(
                 UnityEngine.Random.Range(-0.5f, 0.5f),
-                UnityEngine.Random.Range(0.1f, 0.3f),  // 🔹 БЫЛО 2f, СТАЛО 0.1-0.3f
+                UnityEngine.Random.Range(0.1f, 0.3f),
                 UnityEngine.Random.Range(-0.5f, 0.5f)
             );
-            
             rb.AddForce(force, ForceMode.Impulse);
-            rb.AddTorque(UnityEngine.Random.insideUnitSphere * 1f, ForceMode.Impulse);
         }
     }
 
+    // ✅ ТОЛЬКО ОДИН РАЗ! Возвращает текущее HP глыбы
     public float GetCurrentHp() => currentHp;
     public float GetMaxHp() => initialMaxHp;
 }
