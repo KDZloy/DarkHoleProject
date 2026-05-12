@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
+using System.Collections;
 
 public class PlayerHealth : MonoBehaviour
 {
@@ -11,21 +12,23 @@ public class PlayerHealth : MonoBehaviour
     [Header("🛡️ Броня")]
     [SerializeField] private int armor = 0;
 
-    [Header("📊 UI - Текст")]
+    [Header("📊 UI")]
     [SerializeField] private TextMeshProUGUI healthText;
 
-    [Header("📊 UI - Полоска (Slider)")]
-    [SerializeField] private Slider healthSlider;        // 🔹 НОВОЕ
-    [SerializeField] private Image healthSliderFill;     // 🔹 НОВОЕ: для смены цвета
-    [SerializeField] private Color fullHealthColor = Color.green;
-    [SerializeField] private Color lowHealthColor = Color.red;
-
     public static PlayerHealth Instance { get; private set; }
+
+    // 🔹 Запоминаем, где игрок появился в начале сцены
+    private Vector3 _initialPosition;
+    private Quaternion _initialRotation;
 
     private void Awake()
     {
         if (Instance == null) Instance = this;
         else Destroy(gameObject);
+
+        // Сохраняем стартовую позицию ДО любого перемещения
+        _initialPosition = transform.position;
+        _initialRotation = transform.rotation;
     }
 
     private void Start()
@@ -43,10 +46,9 @@ public class PlayerHealth : MonoBehaviour
         int finalDamage = Mathf.Max(1, amount - damageReduction);
         
         currentHealth -= finalDamage;
-        currentHealth = Mathf.Max(0, currentHealth); // Не меньше 0
+        currentHealth = Mathf.Max(0, currentHealth);
         
         Debug.Log($"👤 Игрок получил {finalDamage} урона. Здоровье: {currentHealth}/{maxHealth}");
-        
         UpdateUI();
         
         if (currentHealth <= 0) Die();
@@ -59,60 +61,51 @@ public class PlayerHealth : MonoBehaviour
         Debug.Log($"👤 Игрок вылечен на {amount}. Здоровье: {currentHealth}/{maxHealth}");
     }
 
-    // 🔹 ГЛАВНЫЙ МЕТОД: Обновляет и текст, и полоску
     private void UpdateUI()
     {
-        // Обновляем текст
         if (healthText != null)
-        {
-            healthText.text = $" {currentHealth}/{maxHealth}";
-        }
-
-        // Обновляем Slider
-        if (healthSlider != null)
-        {
-            healthSlider.maxValue = maxHealth;
-            healthSlider.value = currentHealth;
-        }
-
-        // 🔹 Меняем цвет полоски в зависимости от здоровья
-        if (healthSliderFill != null)
-        {
-            float healthPercent = (float)currentHealth / maxHealth;
-            healthSliderFill.color = Color.Lerp(lowHealthColor, fullHealthColor, healthPercent);
-        }
+            healthText.text = $"❤️ {currentHealth}/{maxHealth}";
     }
 
     private void Die()
     {
         currentHealth = 0;
-        Debug.Log("💀 ИГРОК УМЕР! Потеря ресурсов и перезапуск...");
+        Debug.Log("💀 ИГРОК УМЕР! Потеря ресурсов и возрождение...");
         UpdateUI();
-        
-        // 🔹 ШТРАФ: теряем все руды и слитки
+
+        // 1. Штраф: теряем всю руду и слитки
         if (PlayerInventory.Instance != null)
-        {
-            PlayerInventory.Instance.ClearResourcesOnly(); // или .ClearInventory() если хочешь удалить ВСЁ
-        }
-        
-        // 🔹 Пауза перед рестартом
-        Invoke(nameof(RestartScene), 2f);
-        Time.timeScale = 0f;
+            PlayerInventory.Instance.ClearResourcesOnly();
+
+        // 2. Запускаем процесс смерти (пауза + таймер)
+        StartCoroutine(DeathSequence());
     }
 
-    private void RestartScene()
+    private IEnumerator DeathSequence()
     {
-        Time.timeScale = 1f;
-        
-        // 🔹 Перезагружаем текущую сцену (игрок заспавнится в начальной точке)
-        string currentScene = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
-        UnityEngine.SceneManagement.SceneManager.LoadScene(currentScene);
-        
-        Debug.Log("🔄 Сцена перезагружена. Игрок возрождён в начале!");
+        Time.timeScale = 0f; // Пауза игры
+        yield return new WaitForSecondsRealtime(2f); // Ждём 2 сек (игнорирует паузу)
+        Respawn();
     }
-    
 
-    // 🔹 Публичные геттеры для других скриптов
+    private void Respawn()
+    {
+        Time.timeScale = 1f; // Снимаем паузу
+        currentHealth = maxHealth;
+        UpdateUI();
+
+        // 3. Возвращаем игрока в точку старта
+        transform.position = _initialPosition;
+        transform.rotation = _initialRotation;
+
+        // 4. Фикс застревания в полу/стенах при телепортации
+        var cc = GetComponent<CharacterController>();
+        if (cc != null)
+            cc.Move(Vector3.up * 0.3f);
+
+        Debug.Log("🔄 Игрок возрождён в начальной позиции!");
+    }
+
     public int GetCurrentHealth() => currentHealth;
     public int GetMaxHealth() => maxHealth;
     public bool IsAlive() => currentHealth > 0;

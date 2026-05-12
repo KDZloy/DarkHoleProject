@@ -18969,10 +18969,10 @@ CapsuleCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 2
-  m_Radius: 0.87
+  m_Radius: 0.8
   m_Height: 1
   m_Direction: 1
-  m_Center: {x: -0.04, y: 0.95, z: 0}
+  m_Center: {x: -0.04, y: -0.01, z: 0}
 --- !u!195 &4130496127407891325
 NavMeshAgent:
   m_ObjectHideFlags: 0
