@@ -5,73 +5,90 @@ public class PlayerMiner : MonoBehaviour
 {
     [Header("🎯 Настройки")]
     [SerializeField] private Camera playerCamera;
-    [SerializeField] private Animator animator;
+    [SerializeField] private Animator animator;      // 🔹 Перетащи сюда Animator НОВОЙ модели кирки
     [SerializeField] private float miningRange = 5f;
-    [SerializeField] private LayerMask blockLayer; // 🔹 Слой глыб
+    [SerializeField] private LayerMask blockLayer;   // 🔹 Слой глыб (Block / Ore)
 
     [Header("⚔️ Урон")]
     [SerializeField] private float damage = 15f;
-    [SerializeField] private float penetration = 10f; // 🔹 Пробитие твёрдости
+    [SerializeField] private float penetration = 10f;
 
-    [Header("⏱️ Тайминг")]
-    [SerializeField] private float hitTiming = 0.25f; // 🔹 Когда в анимации наносится урон
-    [SerializeField] private float hitCooldown = 0.8f;
+    [Header("⏱️ Тайминг и Анимация")]
+    [SerializeField] private string mineTriggerName = "Mine"; // 🔹 Имя триггера в Animator новой модели
+    [SerializeField] private float hitTiming = 0.25f;         // Момент удара в анимации
+    [SerializeField] private float attackCooldown = 0.8f;
 
-    private const string ANIM_ATTACK = "Mine";
     private bool isMining = false;
 
-    void Update()
+    private void Awake()
     {
-        if (Input.GetMouseButtonDown(0) && !isMining)
-        {
-            StartCoroutine(MineSequence());
-        }
+        if (playerCamera == null)
+            playerCamera = Camera.main;
+    }
+
+    // 🔹 Публичный метод. Вызывается из WeaponManager или Input Actions по ЛКМ
+    public void Swing()
+    {
+        if (isMining) return;
+        StartCoroutine(MineSequence());
     }
 
     private IEnumerator MineSequence()
     {
         isMining = true;
-        animator?.SetTrigger(ANIM_ATTACK);
 
-        // ⏱️ Ждём момент удара в анимации
+        // 1. Запуск анимации
+        if (animator != null)
+        {
+            animator.SetTrigger(mineTriggerName);
+        }
+        else
+        {
+            Debug.LogWarning("[Кирка] ⚠️ Animator не назначен! Проверь ссылку в Inspector.");
+        }
+
+        // 2. Ждём момент удара (синхронизация с анимацией)
         yield return new WaitForSeconds(hitTiming);
-        
+
+        // 3. Наносим урон
         ApplyDamage();
 
-        // ⏱️ Кулдаун
-        yield return new WaitForSeconds(hitCooldown);
+        // 4. Кулдаун
+        yield return new WaitForSeconds(attackCooldown);
+
         isMining = false;
     }
 
     private void ApplyDamage()
     {
-        // 🔹 Визуализация луча в Scene-окне (только в редакторе)
-        Debug.DrawRay(playerCamera.transform.position, playerCamera.transform.forward * miningRange, Color.green, 0.5f);
+        if (playerCamera == null) return;
 
-        Ray ray = playerCamera.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0f));
+        // Визуализация луча в редакторе
+        Debug.DrawRay(playerCamera.transform.position, playerCamera.transform.forward * miningRange, Color.green, 0.5f);
         
+        Ray ray = playerCamera.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0f));
+
         if (Physics.Raycast(ray, out RaycastHit hit, miningRange, blockLayer))
         {
-            Debug.Log($"[Игрок] 🎯 Попал в: {hit.collider.name}");
+            Debug.Log($"[Кирка] 🎯 Попал в: {hit.collider.name}");
 
-            // 🔹 Ищем скрипт на коллайдере или на родителе
+            // Ищем скрипт на коллайдере или родителе
             MineableBlock block = hit.collider.GetComponent<MineableBlock>();
             if (block == null) block = hit.collider.GetComponentInParent<MineableBlock>();
 
             if (block != null)
             {
-                // 🔹 ВЫЗОВ С ДВУМЯ ПАРАМЕТРАМИ (damage, penetration)
                 block.TakeDamage(damage, penetration);
-                Debug.Log($"[Игрок] ✅ Урон нанесён! Осталось HP: {block.GetCurrentHp()}");
+                Debug.Log($"[Кирка] ✅ Урон нанесён! Осталось HP: {block.GetCurrentHp()}");
             }
             else
             {
-                Debug.LogWarning($"[Игрок] ⚠️ На {hit.collider.name} нет скрипта MineableBlock!");
+                Debug.LogWarning($"[Кирка] ⚠️ На {hit.collider.name} нет скрипта MineableBlock!");
             }
         }
         else
         {
-            Debug.Log("[Игрок] 💨 Промах (луч не попал в слой Block или слишком далеко)");
+            Debug.Log("[Кирка] 💨 Промах (луч не попал в слой Block или слишком далеко)");
         }
     }
 }

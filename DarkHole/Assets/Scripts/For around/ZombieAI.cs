@@ -7,11 +7,11 @@ public class ZombieAI : MonoBehaviour
     [SerializeField] private Transform player;
     [SerializeField] private float detectionRange = 15f;
     [SerializeField] private float attackRange = 2f;
-    [SerializeField] private float despawnTime = 10f; // Время до ухода зомби
+    [SerializeField] private float despawnTime = 10f; // Время до возврата
 
     [Header("🏃 Скорость")]
-    [SerializeField] private float walkSpeed = 2f;    // Шаг (когда нет игрока)
-    [SerializeField] private float runSpeed = 6f;     // Бег (когда видит игрока)
+    [SerializeField] private float walkSpeed = 2f;
+    [SerializeField] private float runSpeed = 6f;
 
     [Header("⚔️ Бой")]
     [SerializeField] private int damage = 15;
@@ -31,11 +31,14 @@ public class ZombieAI : MonoBehaviour
     [SerializeField] private string deathAnimBool = "IsDead";
     [SerializeField] private string speedAnimFloat = "Speed";
 
+    [Header("🏠 Спавн")]
+    [SerializeField] private Vector3 spawnPoint; // Точка спавна
+
     private float lastAttackTime = 0f;
     private bool isDead = false;
     private bool isAttacking = false;
     private float lastSeenPlayerTime = 0f;
-    private bool playerInRange = false;
+    private bool isReturning = false; // 🔹 Возвращается ли зомби
 
     private void Start()
     {
@@ -44,9 +47,11 @@ public class ZombieAI : MonoBehaviour
         if (agent == null) agent = GetComponent<NavMeshAgent>();
         if (animator == null) animator = GetComponent<Animator>();
 
-        // 🔹 Отключаем Root Motion для NavMeshAgent
         if (animator != null)
             animator.applyRootMotion = false;
+
+        // 🔹 Сохраняем точку спавна
+        spawnPoint = transform.position;
 
         GameObject playerObj = GameObject.FindGameObjectWithTag("Player");
         if (playerObj != null)
@@ -60,7 +65,7 @@ public class ZombieAI : MonoBehaviour
     {
         if (isDead) return;
 
-        // 🔹 Проверка: жив ли игрок и существует ли
+        // 🔹 Проверка: жив ли игрок
         if (PlayerHealth.Instance == null || !PlayerHealth.Instance.IsAlive())
         {
             player = null;
@@ -71,14 +76,13 @@ public class ZombieAI : MonoBehaviour
         }
 
         // 🔹 Логика поведения
-        if (player != null)
+        if (player != null && !isReturning)
         {
             float distanceToPlayer = Vector3.Distance(transform.position, player.position);
 
             if (distanceToPlayer <= detectionRange)
             {
                 // 🔹 ИГРОК УВИДЕН — БЕЖИМ!
-                playerInRange = true;
                 lastSeenPlayerTime = Time.time;
                 agent.speed = runSpeed;
                 agent.SetDestination(player.position);
@@ -109,7 +113,6 @@ public class ZombieAI : MonoBehaviour
             else
             {
                 // 🔹 ИГРОК ДАЛЕКО — ИДЁМ ШАГОМ
-                playerInRange = false;
                 agent.speed = walkSpeed;
                 agent.isStopped = true;
 
@@ -117,18 +120,48 @@ public class ZombieAI : MonoBehaviour
                     animator.SetFloat(speedAnimFloat, 0f);
             }
 
-            // 🔹 Проверка: если игрока нет рядом больше N секунд — зомби уходит
+            // 🔹 Проверка: если игрока нет рядом больше N секунд — ВОЗВРАЩАЕМСЯ
             if (Time.time - lastSeenPlayerTime > despawnTime)
             {
-                DespawnZombie();
+                ReturnToSpawn();
+            }
+        }
+        else if (isReturning)
+        {
+            // 🔹 Зомби возвращается в точку спавна
+            float distanceToSpawn = Vector3.Distance(transform.position, spawnPoint);
+
+            if (distanceToSpawn > 1f)
+            {
+                agent.speed = walkSpeed;
+                agent.SetDestination(spawnPoint);
+                agent.isStopped = false;
+
+                if (animator != null)
+                    animator.SetFloat(speedAnimFloat, agent.velocity.magnitude);
+            }
+            else
+            {
+                // 🔹 Вернулся на место
+                isReturning = false;
+                agent.isStopped = true;
+                agent.ResetPath();
+
+                if (animator != null)
+                {
+                    animator.SetFloat(speedAnimFloat, 0f);
+                    animator.SetBool(deathAnimBool, false);
+                }
+
+                Debug.Log("🧟 Зомби вернулся на точку спавна!");
             }
         }
         else
         {
-            // 🔹 ИГРОКА НЕТ В СЦЕНЕ — зомби уходит
+            // 🔹 Игрока нет в сцене — возвращаемся
             if (Time.time - lastSeenPlayerTime > despawnTime)
             {
-                DespawnZombie();
+                ReturnToSpawn();
             }
         }
     }
@@ -169,12 +202,13 @@ public class ZombieAI : MonoBehaviour
     public void TakeDamage(int amount)
     {
         if (isDead) return;
+
         currentHealth -= amount;
         Debug.Log($"🧟 Зомби получил {amount} урона. Здоровье: {currentHealth}/{maxHealth}");
-        
-        if (animator != null && currentHealth > 0) 
+
+        if (animator != null && currentHealth > 0)
             animator.SetTrigger("Hit");
-        
+
         if (currentHealth <= 0) Die();
     }
 
@@ -182,32 +216,37 @@ public class ZombieAI : MonoBehaviour
     {
         isDead = true;
         if (agent != null) agent.isStopped = true;
-        
-        // 🔹 Анимация смерти
+
         if (animator != null)
         {
             animator.SetBool(deathAnimBool, true);
             animator.SetFloat(speedAnimFloat, 0f);
         }
-        
+
         Debug.Log("🧟 Зомби умер!");
         Destroy(gameObject, 3f);
     }
 
-    // 🔹 Зомби уходит (игрок исчез)
-    private void DespawnZombie()
+    // 🔹 Зомби возвращается в точку спавна
+    private void ReturnToSpawn()
     {
-        Debug.Log("🧟 Зомби ушёл (игрок не найден)");
-        
-        // Можно добавить анимацию ухода или просто удалить
-        Destroy(gameObject);
+        isReturning = true;
+        Debug.Log("🧟 Зомби возвращается на точку спавна!");
     }
 
     private void OnDrawGizmosSelected()
     {
+        // Радиус обнаружения
         Gizmos.color = Color.yellow;
         Gizmos.DrawWireSphere(transform.position, detectionRange);
+
+        // Радиус атаки
         Gizmos.color = Color.red;
         Gizmos.DrawWireSphere(transform.position, attackRange);
+
+        // Точка спавна
+        Gizmos.color = Color.green;
+        Gizmos.DrawSphere(spawnPoint, 0.5f);
+        Gizmos.DrawLine(transform.position, spawnPoint);
     }
 }

@@ -34,7 +34,7 @@ public class PlayerInventory : MonoBehaviour
         Debug.Log($"📦 {oreName}: {_oreCounts[oreName]} шт.");
         
         if (OreUIManager.Instance != null)
-            OreUIManager.Instance.UpdateOreUI(oreName, GetOreCount(oreName));
+        OreUIManager.Instance.UpdateResourceUI(oreName, GetOreCount(oreName)); // 🔹 ИЗМЕНЕНО
     }
 
     // 🔹 Добавить деталь
@@ -77,7 +77,7 @@ public class PlayerInventory : MonoBehaviour
             Debug.Log($"📤 Удалено: {oreName} x{amount}");
             
             if (OreUIManager.Instance != null)
-                OreUIManager.Instance.UpdateOreUI(oreName, GetOreCount(oreName));
+        OreUIManager.Instance.UpdateResourceUI(oreName, GetOreCount(oreName)); // 🔹 ИЗМЕНЕНО
         }
     }
 

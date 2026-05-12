@@ -27,12 +27,12 @@ public class OreVein : MonoBehaviour
     };
 
     [Header("3 стадии разрушения")]
-    public GameObject stage1_Full;      // Большая глыба
-    public GameObject stage2_Medium;    // Средняя
-    public GameObject stage3_Small;     // Маленькая с рудой
+    public GameObject stage1_Full;
+    public GameObject stage2_Medium;
+    public GameObject stage3_Small;
 
     [Header("Эффекты")]
-    public ParticleSystem hitParticles; // Пыль/осколки при ударе
+    public ParticleSystem hitParticles;
     public AudioClip hitSound;
     public AudioClip breakSound;
 
@@ -43,21 +43,16 @@ public class OreVein : MonoBehaviour
         currentHealth = maxHealth;
         audioSource = GetComponent<AudioSource>();
         if (audioSource == null) audioSource = gameObject.AddComponent<AudioSource>();
-
-        // Показываем только первую стадию
         SetActiveStage(1);
     }
 
-    // Вызывается из скрипта кирки
     public void TakeDamage(int damage, Vector3 hitPoint)
     {
         currentHealth -= damage;
         if (currentHealth < 0) currentHealth = 0;
 
-        // Обновляем визуальную стадию
         UpdateStage();
 
-        // Эффект удара
         if (hitParticles != null)
         {
             var ps = Instantiate(hitParticles, hitPoint, Quaternion.LookRotation(-transform.up));
@@ -65,22 +60,19 @@ public class OreVein : MonoBehaviour
             Destroy(ps.gameObject, ps.main.duration);
         }
 
-        // Звук
         if (hitSound != null) audioSource.PlayOneShot(hitSound);
 
-        // Разрушение
         if (currentHealth <= 0)
         {
             DropLoot();
             if (breakSound != null) audioSource.PlayOneShot(breakSound);
-            Destroy(gameObject, 0.3f); // Задержка для звука разрушения
+            Destroy(gameObject, 0.3f);
         }
     }
 
     private void UpdateStage()
     {
         float percent = (float)currentHealth / maxHealth * 100f;
-
         if (percent > 66f)
             SetActiveStage(1);
         else if (percent > 33f)
@@ -91,12 +83,10 @@ public class OreVein : MonoBehaviour
 
     private void SetActiveStage(int stage)
     {
-        // Скрываем все
         stage1_Full?.SetActive(false);
         stage2_Medium?.SetActive(false);
         stage3_Small?.SetActive(false);
 
-        // Показываем нужную
         switch (stage)
         {
             case 1: stage1_Full?.SetActive(true); break;
@@ -116,7 +106,6 @@ public class OreVein : MonoBehaviour
             if (roll <= accumulated && drop.prefab != null)
             {
                 int amount = Random.Range(drop.minAmount, drop.maxAmount + 1);
-
                 for (int i = 0; i < amount; i++)
                 {
                     Vector3 pos = transform.position + new Vector3(
@@ -124,20 +113,27 @@ public class OreVein : MonoBehaviour
                         0.5f,
                         Random.Range(-0.6f, 0.6f)
                     );
-
                     GameObject loot = Instantiate(drop.prefab, pos, Quaternion.identity);
 
                     if (loot.TryGetComponent(out Rigidbody rb))
                     {
-                        rb.AddForce(Vector3.up * 3f + new Vector3(
+                        // 🔹 ИСПРАВЛЕНИЕ: Уменьшаем силу и убираем damping
+                        rb.linearDamping = 0.5f;              // Было: linearDamping = 3f (слишком много!)
+                        rb.angularDamping = 0.5f;       // Сопротивление вращению
+                        rb.useGravity = true;        // ✅ Гравитация включена
+                        
+                        // 🔹 Сила выброса (вперёд + немного вверх)
+                        Vector3 force = new Vector3(
                             Random.Range(-1.5f, 1.5f),
-                            0,
+                            Random.Range(2f, 4f),    // Было: 3f (нормально)
                             Random.Range(-1.5f, 1.5f)
-                        ), ForceMode.Impulse);
-                        rb.linearDamping = 3f;
+                        );
+                        rb.AddForce(force, ForceMode.Impulse);
+                        
+                        // 🔹 Случайное вращение
+                        rb.AddTorque(Random.insideUnitSphere * 2f, ForceMode.Impulse);
                     }
                 }
-
                 Debug.Log($"⛏️ Добыто: {drop.name} x{amount}");
                 break;
             }

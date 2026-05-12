@@ -76,13 +76,7 @@ public class Moving : MonoBehaviour
 
     private void Update()
     {
-        // 🔹 Если управление заблокировано — не обрабатываем ввод
-        if (PlayerInputLock.Instance != null && PlayerInputLock.Instance.IsInputLocked())
-        {
-            _move = Vector2.zero;
-            return;
-        }
-
+        
     // ... остальной код ...
         // 🔹 Если открыт любой UI — отключаем управление персонажем
         if (CursorManager.IsAnyUiOpen)
@@ -116,6 +110,11 @@ public class Moving : MonoBehaviour
 
         // 5. Применяем движение
         _characterController.Move(moveDirection * Time.deltaTime);
+        // 🔹 Фикс «прилипания» к краям навмеша/мешей
+            if (_characterController.isGrounded && _velocity.y < 0)
+{
+    _velocity.y = -0.5f; // Небольшое прижатие к земле, предотвращает застревание на стыках
+}
 
         // 6. Логика звуков шагов
         bool isMoving = _move.magnitude > 0.1f && _characterController.isGrounded;

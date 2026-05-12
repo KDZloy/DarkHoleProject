@@ -225,6 +225,7 @@ public class AnvilUIManager : MonoBehaviour
             
             Debug.Log($"⚔️ Собран предмет: {recipe.itemName} ({recipe.requiredMaterial})");
             UpdateAllTabs();
+            WeaponManager.Instance?.EquipByItemName(recipe.itemName);
         }
     }
 
